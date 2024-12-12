@@ -58,7 +58,7 @@ chain = sample(
     spl, 
     1_000_000;
     param_names=["μ", "σ"], 
-    chain_type=Chains       # To 
+    chain_type=Chains      
 );
 
 display(chain)
@@ -68,5 +68,3 @@ display(chain)
 plot(chain)
 
 histogram(chain)
-
-@edit 4+5
