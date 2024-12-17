@@ -17,6 +17,7 @@ y = @. m_true * x + b_true
 yerr = 0.1 .+ 0.5 * rand(N)
 y += yerr .* randn(N)
 y += abs.(f_true * y) .* randn(N)  ### 对误差建模(最小二乘法被低估的部分)
+line_func(x, m, b) = m .* x .+ b
 
 ## show plot
 begin
@@ -65,7 +66,7 @@ end
 
 ## maximum likelihood estimation
 using Optim
-line_func(x, m, b) = m .* x .+ b
+
 function log_likelihood(θ, x, y, yerr)
     m, b, log_f = θ
     ### 使用log_f而非f本身， 可以强迫f>0
@@ -116,6 +117,7 @@ chain = sample(model, NUTS(0.65), 3_000)
 mean(chain[:acceptance_rate])
 
 using AlgebraOfGraphics
+using AlgebraOfGraphics: density
 using PairPlots
 
 params = names(chain, :parameters)
@@ -140,6 +142,19 @@ end
 
 pairplot(chain)
 
+begin
+    #exclude additional information such as log probability
+    params = names(chain, :parameters)
+    chain_mapping =
+        mapping(params .=> "sample value") *
+        mapping(; color=:chain => nonnumeric, row=dims(1) => renamer(params))
+    plt1 = data(chain) * mapping(:iteration) * chain_mapping * visual(Lines)
+    plt2 = data(chain) * chain_mapping * density()
+    f = Figure(; resolution=(800, 600))
+    draw!(f[1, 1], plt1, facet=(; linkxaxes=:none, linkyaxes=:none))
+    draw!(f[1, 2], plt2; axis=(; ylabel="density"), facet=(; linkxaxes=:none, linkyaxes=:none))
+    f
+end
 
 begin
     x_0 = range(0, 10, length=50)
